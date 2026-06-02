@@ -1,5 +1,10 @@
 # SickOfCodeBlocks (`socb`)
 
+[![npm version](https://img.shields.io/npm/v/sickofcodeblocks.svg)](https://www.npmjs.com/package/sickofcodeblocks)
+[![CI](https://github.com/sameerzahir97-cloud/SickOfCodeBlocks/actions/workflows/ci.yml/badge.svg)](https://github.com/sameerzahir97-cloud/SickOfCodeBlocks/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/npm/l/sickofcodeblocks.svg)](./LICENSE)
+[![node](https://img.shields.io/node/v/sickofcodeblocks.svg)](https://nodejs.org)
+
 > Paste terminal output into email, Slack, and docs as clean text — no screenshots, no triple-backtick code blocks.
 
 Raw terminal output is full of stuff that turns to garbage the moment it leaves the terminal: ANSI color codes, progress bars that redrew themselves 200 times, spinner frames, Nerd Font icons that show up as `□`, and box-drawing tables that fall apart in a proportional font. `socb` cleans all of it and gives you plain, readable text.
