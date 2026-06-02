@@ -20,3 +20,5 @@ export { normalizeWhitespace } from "./transforms/whitespace.js";
 export { redact } from "./transforms/redact.js";
 export { emulate, EmulateUnavailableError } from "./transforms/emulate.js";
 export { presetPatch, type Preset } from "./presets.js";
+export { loadConfig, validate as validateConfig, configPaths } from "./config.js";
+export { watchTick, runWatch, type WatchState, type TickResult } from "./watch.js";

@@ -15,6 +15,7 @@ import { isPipedStdin, readStdin } from "./io/stdin.js";
 import { readClipboard, writeClipboard, ClipboardError } from "./io/clipboard.js";
 import { sanitize, shouldSuggestEmulate } from "./pipeline.js";
 import { EmulateUnavailableError } from "./transforms/emulate.js";
+import { runWatch } from "./watch.js";
 
 function fail(message: string): void {
   process.stderr.write(`error: ${message}\n`);
@@ -54,6 +55,24 @@ async function main(argv: string[]): Promise<number> {
   }
   if (cli.showVersion) {
     process.stdout.write(getVersion() + "\n");
+    return 0;
+  }
+
+  if (cli.watch) {
+    // Runs until interrupted (Ctrl+C); runWatch calls process.exit on signal.
+    try {
+      await runWatch(cli.options, cli.interval);
+    } catch (e) {
+      if (e instanceof ClipboardError) {
+        fail(e.message);
+        return 4;
+      }
+      if (e instanceof EmulateUnavailableError) {
+        fail(e.message);
+        return 3;
+      }
+      throw e;
+    }
     return 0;
   }
 

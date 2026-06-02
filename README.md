@@ -43,6 +43,37 @@ docker ps | socb --table ascii       # tables as +--+ instead of aligned columns
 pytest 2>&1 | socb --plain > clean.txt
 ```
 
+## Automate it (no per-copy command)
+
+Don't want to run `socb` every time? Two ways to make it automatic:
+
+**1. Watch the clipboard.** Run it once and every copy is cleaned in place:
+
+```sh
+socb --watch              # clean each copy
+socb --watch --redact     # ...and mask secrets too
+```
+
+Copy any messy terminal output anywhere → it's sanitized the moment you copy it, ready to paste. Press Ctrl+C to stop. (Loop-safe: it never re-processes its own output.)
+
+**2. Set persistent defaults** so you never type a flag. Drop a `~/.socbrc.json` (or a per-project `./.socbrc.json`):
+
+```json
+{ "redact": true, "tableMode": "strip" }
+```
+
+Precedence: built-in defaults < config file < preset < command-line flags. With `redact: true` in your config, even `socb --watch` redacts automatically.
+
+**Start it on login (Windows).** To have the watcher always running, register it with Task Scheduler once:
+
+```powershell
+$action  = New-ScheduledTaskAction -Execute "socb" -Argument "--watch"
+$trigger = New-ScheduledTaskTrigger -AtLogOn
+Register-ScheduledTask -TaskName "socb-watch" -Action $action -Trigger $trigger
+```
+
+(macOS: a `launchd` agent; Linux: a `systemd --user` service or your DE's autostart.)
+
 ### Before / after
 
 Raw (what your terminal received):
@@ -87,6 +118,8 @@ Input priority:  [file] argument  >  --clip  >  piped stdin
 | `--crlf` | | Emit CRLF line endings (default LF) |
 | `--no-collapse-blanks` | | Keep runs of blank lines |
 | `--redact` | `-r` | Mask API keys, JWTs, emails, IPs, and home-dir paths |
+| `--watch` | `-w` | Keep cleaning the clipboard in place (Ctrl+C to stop) |
+| `--interval <ms>` | | `--watch` poll interval (default 800) |
 | `--slack` / `--email` / `--plain` | | Presets (below) |
 | `--help` / `--version` | `-h` / `-v` | |
 

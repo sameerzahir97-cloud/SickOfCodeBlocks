@@ -6,6 +6,9 @@ import { parseArgs } from "node:util";
 import { readFileSync } from "node:fs";
 import { DEFAULTS, type SanitizeOptions, type TableMode } from "./pipeline.js";
 import { presetPatch, type Preset } from "./presets.js";
+import { loadConfig } from "./config.js";
+
+const DEFAULT_INTERVAL_MS = 800;
 
 export type InputSource =
   | { kind: "file"; path: string }
@@ -17,6 +20,8 @@ export interface ParsedCli {
   source: InputSource;
   outFile?: string;
   toClipboard: boolean;
+  watch: boolean;
+  interval: number;
   showHelp: boolean;
   showVersion: boolean;
 }
@@ -72,6 +77,8 @@ export function parseCli(argv: string[]): ParsedCli {
         crlf: { type: "boolean" },
         "no-collapse-blanks": { type: "boolean" },
         redact: { type: "boolean", short: "r" },
+        watch: { type: "boolean", short: "w" },
+        interval: { type: "string" },
         slack: { type: "boolean" },
         email: { type: "boolean" },
         plain: { type: "boolean" },
@@ -89,8 +96,8 @@ export function parseCli(argv: string[]): ParsedCli {
   if (v.help) return baseResult({ showHelp: true });
   if (v.version) return baseResult({ showVersion: true });
 
-  // Defaults, then preset, then explicit flags (explicit always wins).
-  let o: SanitizeOptions = { ...DEFAULTS };
+  // Defaults, then config file, then preset, then explicit flags (explicit wins).
+  let o: SanitizeOptions = { ...DEFAULTS, ...loadConfig() };
   const preset: Preset | null = v.plain
     ? "plain"
     : v.email
@@ -132,10 +139,17 @@ export function parseCli(argv: string[]): ParsedCli {
       ? { kind: "clip" }
       : { kind: "stdin" };
 
+  const interval =
+    v.interval !== undefined
+      ? parsePositiveInt(v.interval, "--interval")
+      : DEFAULT_INTERVAL_MS;
+
   const result: ParsedCli = {
     options: o,
     source,
     toClipboard: Boolean(v.clip),
+    watch: Boolean(v.watch),
+    interval,
     showHelp: false,
     showVersion: false,
   };
@@ -148,6 +162,8 @@ function baseResult(over: Partial<ParsedCli>): ParsedCli {
     options: { ...DEFAULTS },
     source: { kind: "stdin" },
     toClipboard: false,
+    watch: false,
+    interval: DEFAULT_INTERVAL_MS,
     showHelp: false,
     showVersion: false,
     ...over,
@@ -182,6 +198,8 @@ OPTIONS
       --crlf            emit CRLF line endings (default LF)
       --no-collapse-blanks  keep runs of blank lines
   -r, --redact          mask secrets/PII (API keys, JWTs, emails, IPs, home paths)
+  -w, --watch           keep cleaning the clipboard in place (Ctrl+C to stop)
+      --interval <ms>   --watch poll interval (default 800)
   -h, --help            show this help
   -v, --version         show version
 
@@ -190,11 +208,16 @@ PRESETS  (apply a bundle; individual flags still override)
       --email           tables stripped, emoji stripped, typographic on
       --plain           tables stripped, emoji+glyphs stripped, arrows + tabs->spaces
 
+CONFIG  (set persistent defaults so you don't repeat flags)
+  ~/.socbrc.json  or  ./.socbrc.json , e.g.  { "redact": true, "tableMode": "strip" }
+  Precedence:  built-in defaults < config file < preset < command-line flags.
+
 EXAMPLES
   npm install | socb
   docker ps | socb --table ascii
   pytest | socb --redact > clean.txt
   socb --clip --redact
+  socb --watch --redact          # auto-clean every copy until you stop it
   socb build.log --emulate
 
 --redact is best-effort, not a security guarantee. Review output before sharing.

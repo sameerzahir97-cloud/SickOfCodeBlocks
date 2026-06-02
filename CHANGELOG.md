@@ -16,3 +16,5 @@ All notable changes to this project are documented here. The format is based on
 - `--redact` secret/PII masking.
 - `--slack` / `--email` / `--plain` presets.
 - `--clip` clipboard input/output.
+- `--watch` clipboard-watch mode: clean every copy in place automatically.
+- Config file (`~/.socbrc.json` / `./.socbrc.json`) for persistent default options.
