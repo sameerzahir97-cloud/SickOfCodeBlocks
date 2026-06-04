@@ -68,7 +68,7 @@ Real workflows, with the exact command:
 
 | You want to… | Run |
 |---|---|
-| Share a failing build/test in Slack | `npm test 2>&1 \| socb --slack` |
+| Share a failing build in Teams or Slack | `npm test 2>&1 \| socb --teams` |
 | Email an AI answer or README as plain prose | copy it, then `socb --clip --email` |
 | Clean a log file for a gist / bug report | `socb build.log --plain > clean.txt` |
 | Auto-clean every copy (set & forget) | `socb --watch` |
@@ -145,7 +145,7 @@ Input priority:  [file] argument  >  --clip  >  piped stdin
 | `--redact` | `-r` | Mask API keys, JWTs, emails, IPs, and home-dir paths |
 | `--watch` | `-w` | Keep cleaning the clipboard in place (Ctrl+C to stop) |
 | `--interval <ms>` | | `--watch` poll interval (default 800; 1500 on Windows) |
-| `--slack` / `--email` / `--plain` / `--agent` | | Presets (below) |
+| `--slack` / `--teams` / `--email` / `--plain` / `--agent` | | Presets (below) |
 | `--help` / `--version` | `-h` / `-v` | |
 
 ### Presets
@@ -154,7 +154,7 @@ Presets set a bundle of defaults; any explicit flag still overrides them (e.g. `
 
 | Preset | Tables | Markdown | Notes |
 |---|---|---|---|
-| `--slack` | reconstruct | left as-is | Slack renders Unicode; aligned tables read well |
+| `--slack` / `--teams` | reconstruct | left as-is | Slack & Teams render Unicode/emoji; paste tables inside a code block so columns align |
 | `--email` | strip | **flattened** | Markdown → readable prose for proportional fonts (email / Docs / Word) |
 | `--plain` | strip | **flattened** | The `--email` bundle + arrows + tabs→spaces. Maximum compatibility |
 | `--agent` | strip | kept (structure) | Denoise for feeding output **into** a model: strips ANSI/box/glyph noise but keeps Markdown + Unicode (no flattening, no ASCII folding) |

@@ -3,13 +3,17 @@
 
 import type { SanitizeOptions } from "./pipeline.js";
 
-export type Preset = "slack" | "email" | "plain" | "agent";
+export type Preset = "slack" | "teams" | "email" | "plain" | "agent";
 
 export function presetPatch(preset: Preset): Partial<SanitizeOptions> {
   switch (preset) {
     case "slack":
-      // Slack renders Unicode fine; reconstructed tables read well in a code-less
-      // paste. Strip Nerd Font glyphs (the reader won't have the font).
+    case "teams":
+      // Slack and Microsoft Teams are the same target: a proportional-font chat
+      // box that renders Unicode + emoji and has a monospace code block for
+      // tables/code. So keep emoji, strip Nerd Font glyphs (no patched font), and
+      // reconstruct tables (they align inside a code block). Markdown is left
+      // intact for the app to render.
       return {
         tableMode: "reconstruct",
         stripEmoji: false,

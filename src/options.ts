@@ -97,6 +97,7 @@ export function parseCli(argv: string[]): ParsedCli {
         watch: { type: "boolean", short: "w" },
         interval: { type: "string" },
         slack: { type: "boolean" },
+        teams: { type: "boolean" },
         email: { type: "boolean" },
         plain: { type: "boolean" },
         agent: { type: "boolean" },
@@ -122,9 +123,11 @@ export function parseCli(argv: string[]): ParsedCli {
       ? "email"
       : v.slack
         ? "slack"
-        : v.agent
-          ? "agent"
-          : null;
+        : v.teams
+          ? "teams"
+          : v.agent
+            ? "agent"
+            : null;
   if (preset) o = { ...o, ...presetPatch(preset) };
 
   if (v.table !== undefined) {
@@ -247,7 +250,7 @@ OPTIONS
   -v, --version         show version
 
 PRESETS  (apply a bundle; individual flags still override)
-      --slack           tables reconstructed, emoji kept, typographic on
+      --slack, --teams  chat apps: tables reconstructed, emoji + Markdown kept
       --email           flatten Markdown, strip tables/emoji/glyphs -> readable prose
       --plain           email preset + arrows + tabs->spaces (max compatibility)
       --agent           denoise for feeding output INTO a model: strip ANSI/box/

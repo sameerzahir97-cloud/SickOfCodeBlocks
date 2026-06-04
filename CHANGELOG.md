@@ -6,6 +6,17 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-06-04
+
+### Added
+- `--teams` preset for Microsoft Teams — same bundle as `--slack` (both are
+  proportional-font chat apps that render Unicode/emoji and have a monospace code
+  block, so tables reconstruct and Markdown is left intact). Also accepted by the
+  MCP `sanitize_text` tool.
+
+### Changed
+- Clearer README: lead with a before/after example and a condensed feature list.
+
 ## [0.2.0] - 2026-06-04
 
 ### Added

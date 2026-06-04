@@ -81,6 +81,12 @@ describe("cli integration (spawns the built binary)", () => {
     expect(r.stdout).toBe("**bold** red\n");
   });
 
+  it("--teams mirrors --slack and keeps Markdown for the app to render", () => {
+    const table = "| A | B |\n|---|---|\n| 1 | 2 |";
+    expect(run(["--teams"], table).stdout).toBe(run(["--slack"], table).stdout);
+    expect(run(["--teams"], "**bold** and `code`").stdout).toBe("**bold** and `code`\n");
+  });
+
   it("--ps tidies a PowerShell error block", () => {
     const r = run(["--ps"], "At line:1 char:1\n+ Get-Item foo\n+ ~~~~~~~~");
     expect(r.stdout).toBe("At line:1 char:1\nGet-Item foo\n");

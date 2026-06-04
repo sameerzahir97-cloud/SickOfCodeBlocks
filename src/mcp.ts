@@ -19,7 +19,7 @@ import { sanitize, type SanitizeOptions } from "./pipeline.js";
 import { presetPatch, type Preset } from "./presets.js";
 import { getVersion } from "./options.js";
 
-const PRESETS: readonly Preset[] = ["slack", "email", "plain", "agent"];
+const PRESETS: readonly Preset[] = ["slack", "teams", "email", "plain", "agent"];
 
 export interface SanitizeToolArgs {
   text: string;
@@ -56,8 +56,8 @@ const TOOL = {
         enum: PRESETS as readonly string[],
         description:
           "Optional bundle. 'email'/'plain': flatten Markdown+HTML for a human " +
-          "reader. 'slack': keep Unicode/tables. 'agent': denoise but keep " +
-          "Markdown + Unicode for a model.",
+          "reader. 'slack'/'teams': keep Unicode/tables for a chat app. 'agent': " +
+          "denoise but keep Markdown + Unicode for a model.",
       },
       options: {
         type: "object",

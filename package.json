@@ -1,6 +1,6 @@
 {
   "name": "sickofcodeblocks",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Convert raw terminal/CLI output into clean plain text for pasting into email, Slack, and docs — no screenshots, no code blocks.",
   "keywords": [
     "ansi",
