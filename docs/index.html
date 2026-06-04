@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SickOfCodeBlocks - paste messy output, get clean text</title>
+<style>
+  :root {
+    --bg: #1b1d2b; --panel: #222436; --panel2: #1e2030; --border: #2f334d;
+    --fg: #c8d3f5; --muted: #828bb8; --blue: #82aaff; --purple: #c099ff;
+    --green: #c3e88d; --red: #ff757f; --yellow: #ffc777;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  header { padding: 28px 24px 18px; text-align: center; border-bottom: 1px solid var(--border); }
+  header h1 { margin: 0; font-size: 24px; letter-spacing: -0.3px; }
+  header h1 .accent { color: var(--purple); }
+  header p { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 18px 24px 40px; }
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center;
+    margin-bottom: 14px;
+  }
+  .controls .group { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  label.lbl { color: var(--muted); font-size: 13px; margin-right: 2px; }
+  select, button {
+    font: inherit; font-size: 13px; color: var(--fg); background: var(--panel2);
+    border: 1px solid var(--border); border-radius: 7px; padding: 7px 11px; cursor: pointer;
+  }
+  button:hover, select:hover { border-color: var(--blue); }
+  button.preset.active { background: var(--blue); color: #1b1d2b; border-color: var(--blue); font-weight: 600; }
+  .toggle { display: inline-flex; align-items: center; gap: 6px; color: var(--fg); font-size: 13px; cursor: pointer; }
+  .spacer { flex: 1; }
+  #copy { background: var(--green); color: #1b1d2b; border-color: var(--green); font-weight: 600; }
+  .panes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .pane { display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .pane .head { padding: 8px 13px; font-size: 12px; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--border); display:flex; justify-content:space-between; }
+  .mono { font-family: "JetBrains Mono", "Cascadia Code", Consolas, "Courier New", monospace; font-size: 13px; }
+  textarea, pre.out {
+    margin: 0; border: 0; resize: none; width: 100%; height: 460px;
+    padding: 13px; background: transparent; color: var(--fg);
+    overflow: auto; white-space: pre; tab-size: 4;
+  }
+  textarea:focus { outline: none; }
+  pre.out { color: var(--green); }
+  footer { text-align: center; color: var(--muted); font-size: 12.5px; margin-top: 16px; }
+  footer a { color: var(--blue); text-decoration: none; }
+  .priv { color: var(--green); }
+  @media (max-width: 820px) { .panes { grid-template-columns: 1fr; } textarea, pre.out { height: 280px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Sick<span class="accent">OfCodeBlocks</span></h1>
+  <p>Paste messy terminal / Salesforce CLI / AI output &rarr; get clean text you can drop into Teams, Slack, email, or a ticket.</p>
+</header>
+
+<div class="wrap">
+  <div class="controls">
+    <div class="group">
+      <label class="lbl" for="example">Try an example:</label>
+      <select id="example">
+        <option value="">- choose -</option>
+        <option value="deploy">Salesforce: sf deploy error</option>
+        <option value="apex">Salesforce: Apex test results</option>
+        <option value="ai">AI assistant answer (Markdown)</option>
+        <option value="npm">Build log (npm + docker table)</option>
+      </select>
+    </div>
+    <div class="group">
+      <label class="lbl">Format for:</label>
+      <button class="preset" data-preset="teams">Teams</button>
+      <button class="preset" data-preset="slack">Slack</button>
+      <button class="preset" data-preset="email">Email</button>
+      <button class="preset" data-preset="plain">Plain</button>
+      <button class="preset" data-preset="agent">Agent</button>
+      <button class="preset" data-preset="">Default</button>
+    </div>
+    <label class="toggle"><input type="checkbox" id="redact" /> Redact secrets</label>
+    <div class="spacer"></div>
+    <button id="copy">Copy clean output</button>
+  </div>
+
+  <div class="panes">
+    <div class="pane">
+      <div class="head"><span>MESSY INPUT</span><span id="inStat"></span></div>
+      <textarea id="input" class="mono" spellcheck="false"
+        placeholder="Paste messy output here - ANSI colors, progress bars, sf/sfdx deploy logs, box-drawing tables, a ChatGPT/Claude answer... or pick an example above."></textarea>
+    </div>
+    <div class="pane">
+      <div class="head"><span>CLEAN OUTPUT</span><span id="outStat"></span></div>
+      <pre id="output" class="out mono"></pre>
+    </div>
+  </div>
+
+  <footer>
+    <p class="priv">&#128274; Runs 100% in your browser - nothing you paste is uploaded or leaves your machine (it even works offline).</p>
+    <p>The same engine ships as a CLI + library + MCP server &middot;
+       <a href="https://www.npmjs.com/package/sickofcodeblocks">npm</a> &middot;
+       <a href="https://github.com/sameerzahir97-cloud/SickOfCodeBlocks">GitHub</a></p>
+  </footer>
+</div>
+
+<script src="./socb.browser.js"></script>
+<script>
+(function () {
+  var e = String.fromCharCode(27);   // ESC (ANSI introducer)
+  var cr = String.fromCharCode(13);  // carriage return (progress-bar redraw)
+
+  // --- Examples (representative; built so colors/redraws/tables are realistic) ---
+  var examples = {};
+
+  examples.deploy =
+`${e}[2m=== Deploying v59.0 to DevHub (sandbox) ===${e}[0m
+${e}[2K${cr}${e}[36m> ${e}[0mDeploying  [${e}[32m----------${e}[0m]   0/45${e}[2K${cr}${e}[36m> ${e}[0mDeploying  [${e}[32m#####-----${e}[0m]  23/45${e}[2K${cr}${e}[36m> ${e}[0mDeploying  [${e}[32m##########${e}[0m]  45/45
+${e}[1m Status   Name                  Type${e}[0m
+ ${e}[32m✓${e}[0m       AccountTrigger        ApexTrigger
+ ${e}[32m✓${e}[0m       AccountService        ApexClass
+ ${e}[31m✗${e}[0m       AccountServiceTest    ApexClass
+${e}[31m${e}[1m=== Deploy Failed ===${e}[0m
+AccountServiceTest.cls:42:9 - Method does not exist or incorrect signature:
+  void assertEquals(Decimal, Integer) from the type System.Assert
+Deploy ID: 0AfQy00000abcdEFGH | user: build@devhub.example.com`;
+
+  examples.apex =
+`${e}[1mApex Test Results${e}[0m
+┌──────────────────────────────┬─────────┬───────────┐
+│ Test Method                  │ Outcome │ Time (ms) │
+├──────────────────────────────┼─────────┼───────────┤
+│ AccountServiceTest.create    │ ${e}[32mPass${e}[0m    │ 142       │
+│ AccountServiceTest.update    │ ${e}[32mPass${e}[0m    │ 88        │
+│ AccountServiceTest.deleteAll │ ${e}[31mFail${e}[0m    │ 13        │
+└──────────────────────────────┴─────────┴───────────┘
+${e}[31m✗ 1 failed${e}[0m   ${e}[32m✓ 2 passed${e}[0m   (78% coverage)`;
+
+  // AI answer: array of lines (backticks are literal inside double-quoted strings).
+  examples.ai = [
+    "## Fix for the failing Apex test",
+    "",
+    "The assertion compares **mismatched types**. Update `AccountServiceTest.cls` so both sides are `Decimal`:",
+    "",
+    "1. Open the test method `deleteAll`.",
+    "2. Change the literal to a decimal.",
+    "3. Re-run with `sf apex run test`.",
+    "",
+    "```apex",
+    "@isTest",
+    "static void deleteAll() {",
+    "    Decimal total = AccountService.sumOpen();",
+    "    System.assertEquals(5.0, total); // both Decimal now",
+    "}",
+    "```",
+    "",
+    "See the [Apex testing guide](https://developer.salesforce.com/docs) for details.",
+  ].join("\n");
+
+  examples.npm =
+`${e}[2K${cr}npm install [${e}[32m####------${e}[0m] 40%${e}[2K${cr}npm install [${e}[32m##########${e}[0m] 100%
+${e}[32m✔${e}[0m added 312 packages in 9s
+${e}[1mCONTAINER   IMAGE          STATUS${e}[0m
+a1b2c3d4    web:latest     ${e}[32mUp 2 minutes${e}[0m
+e5f6g7h8    postgres:16    ${e}[32mUp 2 minutes${e}[0m`;
+
+  // --- Wire up the UI ---
+  var inputEl = document.getElementById("input");
+  var outputEl = document.getElementById("output");
+  var redactEl = document.getElementById("redact");
+  var exampleEl = document.getElementById("example");
+  var inStat = document.getElementById("inStat");
+  var outStat = document.getElementById("outStat");
+  var presetBtns = Array.prototype.slice.call(document.querySelectorAll(".preset"));
+
+  var preset = "teams"; // default selection (audience uses Teams)
+
+  function setActive() {
+    presetBtns.forEach(function (b) {
+      b.classList.toggle("active", b.dataset.preset === preset);
+    });
+  }
+  function lines(s) { return s === "" ? 0 : s.split("\n").length; }
+
+  async function render() {
+    var input = inputEl.value;
+    inStat.textContent = lines(input) + " lines";
+    var opts = preset ? socb.presetPatch(preset) : {};
+    if (redactEl.checked) opts = Object.assign({}, opts, { redact: true });
+    try {
+      var out = await socb.sanitize(input, opts);
+      outputEl.textContent = out;
+      outStat.textContent = lines(out) + " lines";
+    } catch (err) {
+      outputEl.textContent = "Error: " + (err && err.message ? err.message : err);
+    }
+  }
+
+  presetBtns.forEach(function (b) {
+    b.addEventListener("click", function () { preset = b.dataset.preset; setActive(); render(); });
+  });
+  redactEl.addEventListener("change", render);
+  inputEl.addEventListener("input", render);
+  exampleEl.addEventListener("change", function () {
+    if (examples[exampleEl.value]) { inputEl.value = examples[exampleEl.value]; render(); }
+  });
+  document.getElementById("copy").addEventListener("click", function () {
+    navigator.clipboard.writeText(outputEl.textContent).then(function () {
+      var btn = document.getElementById("copy");
+      var t = btn.textContent; btn.textContent = "Copied!";
+      setTimeout(function () { btn.textContent = t; }, 1200);
+    });
+  });
+
+  // Load the Salesforce deploy example by default so the page is alive on open.
+  setActive();
+  exampleEl.value = "deploy";
+  inputEl.value = examples.deploy;
+  render();
+})();
+</script>
+</body>
+</html>

@@ -23,6 +23,8 @@ Downloading [##########] 100%
 master view run (https://ci.example.com/42)
 ```
 
+**▶ [Try it live in your browser](https://sameerzahir97-cloud.github.io/SickOfCodeBlocks/)** — paste your own terminal, Salesforce CLI, or AI output and watch it clean up. Runs 100% client-side; nothing you paste leaves your machine.
+
 Raw terminal output is full of stuff that turns to garbage the moment it leaves the terminal: ANSI color codes, progress bars that redrew themselves 200 times, spinner frames, Nerd Font icons that show up as `□`, and box-drawing tables that fall apart in a proportional font. `socb` cleans all of it and gives you plain, readable text.
 
 Stripping colors is the easy 10%. `socb` also does the parts other tools skip:
@@ -69,6 +71,7 @@ Real workflows, with the exact command:
 | You want to… | Run |
 |---|---|
 | Share a failing build in Teams or Slack | `npm test 2>&1 \| socb --teams` |
+| Tidy an `sf`/`sfdx` deploy error for Teams | `sf project deploy start 2>&1 \| socb --teams` |
 | Email an AI answer or README as plain prose | copy it, then `socb --clip --email` |
 | Clean a log file for a gist / bug report | `socb build.log --plain > clean.txt` |
 | Auto-clean every copy (set & forget) | `socb --watch` |
