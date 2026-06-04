@@ -52,6 +52,7 @@ export function validate(obj: unknown): Partial<SanitizeOptions> {
   const bools: Array<keyof SanitizeOptions> = [
     "redact",
     "stripGlyphs",
+    "stripFences",
     "stripEmoji",
     "typographic",
     "arrows",

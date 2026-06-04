@@ -70,6 +70,8 @@ export function parseCli(argv: string[]): ParsedCli {
         "strip-emoji": { type: "boolean" },
         "no-glyphs": { type: "boolean" },
         "keep-glyphs": { type: "boolean" },
+        "no-fences": { type: "boolean" },
+        "keep-fences": { type: "boolean" },
         "no-typographic": { type: "boolean" },
         arrows: { type: "boolean" },
         "expand-tabs": { type: "boolean" },
@@ -121,6 +123,7 @@ export function parseCli(argv: string[]): ParsedCli {
   if (v["no-links"]) o.hyperlinks = false;
   if (v["strip-emoji"]) o.stripEmoji = true;
   if (v["no-glyphs"] || v["keep-glyphs"]) o.stripGlyphs = false;
+  if (v["no-fences"] || v["keep-fences"]) o.stripFences = false;
   if (v["no-typographic"]) o.typographic = false;
   if (v.arrows) o.arrows = true;
   if (v["no-collapse-blanks"]) o.collapseBlankLines = false;
@@ -191,6 +194,8 @@ OPTIONS
       --no-links        do not rewrite OSC 8 hyperlinks to "text (url)"
       --strip-emoji     remove emoji, ZWJ sequences, variation selectors, skin tones
       --no-glyphs       keep Nerd Font / Private-Use glyphs (default strips them)
+      --no-fences       keep Markdown code fences + PowerShell ~ underlines
+                        (default strips these marker lines)
       --no-typographic  keep smart quotes / em-dashes / ellipsis (default -> ASCII)
       --arrows          also convert arrows  (-> for the right arrow, etc.)
       --expand-tabs     convert tabs to spaces (4 wide)

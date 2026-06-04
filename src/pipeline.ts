@@ -5,6 +5,7 @@ import { rewriteHyperlinks } from "./transforms/hyperlinks.js";
 import { resolveOverwrites } from "./transforms/overwrite.js";
 import { stripEscapes, stripLooseControls } from "./transforms/escapes.js";
 import { stripGlyphs } from "./transforms/glyphs.js";
+import { stripFences } from "./transforms/fences.js";
 import { transformTables } from "./transforms/tables.js";
 import { stripEmoji } from "./transforms/emoji.js";
 import { normalizeTypography } from "./transforms/typography.js";
@@ -26,6 +27,8 @@ export interface SanitizeOptions {
   tableMode: TableMode;
   /** Step 6. */
   stripGlyphs: boolean;
+  /** Step 6b: drop Markdown code fences + PowerShell tilde underlines. */
+  stripFences: boolean;
   /** Step 8. */
   stripEmoji: boolean;
   /** Step 9. */
@@ -48,6 +51,7 @@ export const DEFAULTS: SanitizeOptions = {
   hyperlinks: true,
   tableMode: "reconstruct",
   stripGlyphs: true,
+  stripFences: true,
   stripEmoji: false,
   typographic: true,
   arrows: false,
@@ -88,6 +92,7 @@ export async function sanitize(
   }
 
   if (o.stripGlyphs) s = stripGlyphs(s); // step 6
+  if (o.stripFences) s = stripFences(s); // step 6b
   s = transformTables(s, o.tableMode); // step 7
   if (o.stripEmoji) s = stripEmoji(s); // step 8
   if (o.typographic) s = normalizeTypography(s, o.arrows); // step 9

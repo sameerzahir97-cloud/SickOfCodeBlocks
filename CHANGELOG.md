@@ -7,6 +7,9 @@ All notable changes to this project are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- Strip Markdown code fences (```` ``` ````/`~~~`) and PowerShell `~~~~~` error
+  underlines so pasted output is fence-free (on by default; `--no-fences` to
+  keep them). New `stripFences` option / exported transform.
 - Initial release: `sickofcodeblocks` / `socb` CLI.
 - Core pipeline: OSC 8 hyperlink rewrite, carriage-return/spinner collapse,
   augmented ANSI/OSC/DCS/APC escape stripping, Nerd Font/Powerline glyph

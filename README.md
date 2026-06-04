@@ -14,6 +14,7 @@ Stripping colors is the easy 10%. `socb` also does the parts other tools skip:
 - **Collapses progress bars & spinners** to their final state (resolves carriage-return / backspace / erase-line redraws).
 - **Flattens multi-line redraws** (docker / cargo / pip) with an optional headless-terminal mode (`--emulate`).
 - **Removes Nerd Font / Powerline glyphs** (Private Use Area) that render as tofu.
+- **Strips Markdown code fences** (```` ``` ````/`~~~`) and PowerShell `~~~~~` error underlines so the paste isn't itself a code block.
 - **Rebuilds box-drawing tables** into clean aligned columns.
 - **Strips embedded escape strings** that `strip-ansi` leaks — OSC, plus DCS/APC (sixel, Kitty graphics).
 - **Rewrites hyperlinks** (`OSC 8`) to `text (url)` instead of dropping the URL.
@@ -117,6 +118,7 @@ Input priority:  [file] argument  >  --clip  >  piped stdin
 | `--no-links` | | Don't rewrite OSC 8 hyperlinks |
 | `--strip-emoji` | | Remove emoji (+ ZWJ / variation selectors / skin tones) |
 | `--no-glyphs` | | Keep Nerd Font / Private-Use glyphs |
+| `--no-fences` | | Keep Markdown code fences + PowerShell `~` underlines (default strips them) |
 | `--no-typographic` | | Keep smart quotes / em-dashes / ellipsis (don't convert to ASCII) |
 | `--arrows` | | Also convert arrows (`→` becomes `->`) |
 | `--expand-tabs` / `--tab-width <n>` | | Convert tabs to spaces (default width 4) |

@@ -13,6 +13,7 @@ export { rewriteHyperlinks } from "./transforms/hyperlinks.js";
 export { resolveOverwrites } from "./transforms/overwrite.js";
 export { stripEscapes, stripLooseControls } from "./transforms/escapes.js";
 export { stripGlyphs } from "./transforms/glyphs.js";
+export { stripFences } from "./transforms/fences.js";
 export { transformTables } from "./transforms/tables.js";
 export { stripEmoji } from "./transforms/emoji.js";
 export { normalizeTypography } from "./transforms/typography.js";
