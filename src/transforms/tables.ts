@@ -132,7 +132,10 @@ function reconstruct(blockLines: string[]): string {
     .filter((l) => !isBorderRow(l))
     .map((l) => splitCells(l));
   if (rows.length === 0) return "";
-  const cols = Math.max(...rows.map((r) => r.length));
+  // Reduce (not Math.max(...spread)): a huge pasted table would overflow the
+  // call-stack/arg limit and throw, which in --watch would kill the loop.
+  let cols = 0;
+  for (const r of rows) if (r.length > cols) cols = r.length;
   const widths: number[] = new Array(cols).fill(0);
   for (const r of rows) {
     for (let i = 0; i < cols; i++) {

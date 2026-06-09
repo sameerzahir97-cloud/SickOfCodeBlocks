@@ -4,14 +4,43 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.3.0] - 2026-06-09
+
+### Changed
+- **`socb --watch` now flattens everything by default — including Markdown.** A bare
+  `socb --watch` cleans every copy in place (Markdown headings / `**bold**` / lists /
+  `[text](url)` → plain prose, terminal noise stripped) so a copied AI answer or
+  README pastes straight into Slack, Teams, email, or a Jira ticket — no per-copy
+  flag. The old conservative "only touch terminal-looking output" behavior is still
+  available via `--only-messy` (or keep Markdown literal with `--no-markdown`). This
+  reverses the 0.2.0 watch default.
 
 ### Added
+- **Interactive watch.** On a TTY, `socb --watch` takes live keys: `m` Markdown ·
+  `r` redact · `p` pause/resume · `s` skip the next copy · `u` undo (restore your
+  last original copy) · `?` help · `q` quit. Plus a teaching banner, a one-time
+  first-run explainer, and smart per-copy feedback that names what it saw (Markdown /
+  terminal output / HTML / table) and nudges the most relevant control.
+- **`--dry-run`** for watch — show what *would* change without writing the clipboard.
+- **`--verbose` / `--quiet`** output tiers for watch.
+- **`socb config set <key> <value>`** — persist a default into `~/.socbrc.json`.
+- **Two new MCP tools** alongside `sanitize_text`: `clean_clipboard` (read → clean →
+  write the system clipboard in one call) and `start_clipboard_watcher` (best-effort:
+  open a terminal running `socb --watch`, otherwise return the command for the agent
+  to run in a background terminal).
 - Hosted **web playground** (`docs/`, served via GitHub Pages) for trying socb in
   the browser — paste messy output, watch it clean live, with preset buttons and a
   redact toggle. Runs client-side via a new browser bundle (`src/browser.ts`); no
   change to the published package behavior.
 - `docs/DEMO.md` — a demo script and Q&A cheat sheet.
+
+### Fixed
+- **Watch is now crash-proof**: a copy that throws during processing is reported and
+  skipped instead of killing the watcher.
+- Watch no longer rewrites multi-line (e.g. Markdown) clipboard content on every poll
+  because of CRLF/LF differences — the dedup comparison is newline-normalized.
+- A very large reconstructed table can no longer overflow the argument limit and
+  throw (the column count is computed without a `Math.max(...spread)`).
 
 ## [0.2.1] - 2026-06-04
 

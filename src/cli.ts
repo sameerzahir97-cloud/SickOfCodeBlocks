@@ -18,9 +18,46 @@ import { readClipboard, writeClipboard, ClipboardError } from "./io/clipboard.js
 import { sanitize, shouldSuggestEmulate } from "./pipeline.js";
 import { EmulateUnavailableError } from "./transforms/emulate.js";
 import { runWatch } from "./watch.js";
+import { setUserConfig, validate } from "./config.js";
 
 function fail(message: string): void {
   process.stderr.write(`error: ${message}\n`);
+}
+
+const CONFIG_USAGE =
+  "usage: socb config set <key> <value>   e.g. socb config set markdown false";
+
+/** Coerce a CLI string into the boolean / number / string a config key expects. */
+function coerceConfigValue(raw: string): unknown {
+  if (raw === "true") return true;
+  if (raw === "false") return false;
+  const n = Number(raw);
+  if (raw.trim() !== "" && Number.isInteger(n)) return n;
+  return raw;
+}
+
+/** `socb config set <key> <value>` — persist a default into ~/.socbrc.json. */
+function handleConfig(args: string[]): number {
+  if (args[0] !== "set" || args.length < 3) {
+    fail(CONFIG_USAGE);
+    return 2;
+  }
+  const key = args[1] as string;
+  const value = coerceConfigValue(args[2] as string);
+  // validate() keeps only known keys with the right type; if our key survived,
+  // it's a real, well-typed setting.
+  if (!(key in validate({ [key]: value }))) {
+    fail(`unknown or invalid config setting: ${key}=${args[2]} (see socb --help)`);
+    return 2;
+  }
+  try {
+    const path = setUserConfig(key, value);
+    process.stdout.write(`socb: set ${key} = ${JSON.stringify(value)} in ${path}\n`);
+    return 0;
+  } catch (e) {
+    fail(`couldn't write config: ${e instanceof Error ? e.message : String(e)}`);
+    return 1;
+  }
 }
 
 async function loadInput(cli: ParsedCli): Promise<string> {
@@ -40,6 +77,8 @@ async function loadInput(cli: ParsedCli): Promise<string> {
 }
 
 async function main(argv: string[]): Promise<number> {
+  if (argv[0] === "config") return handleConfig(argv.slice(1));
+
   let cli: ParsedCli;
   try {
     cli = parseCli(argv);
@@ -63,7 +102,12 @@ async function main(argv: string[]): Promise<number> {
   if (cli.watch) {
     // Runs until interrupted (Ctrl+C); runWatch calls process.exit on signal.
     try {
-      await runWatch(cli.options, cli.interval, cli.quiet);
+      await runWatch(cli.options, cli.interval, {
+        quiet: cli.quiet,
+        verbose: cli.verbose,
+        dryRun: cli.dryRun,
+        onlyMessy: cli.onlyMessy,
+      });
     } catch (e) {
       if (e instanceof ClipboardError) {
         fail(e.message);

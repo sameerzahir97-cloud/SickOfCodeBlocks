@@ -74,4 +74,9 @@ describe("transformTables", () => {
   it("removes stray box glyphs on non-table lines", () => {
     expect(transformTables("a " + H(3) + " b", "reconstruct")).toBe("a  b");
   });
+  it("reconstructs a very large table without throwing (no Math.max spread)", () => {
+    const rows = ["| a | b |", "|---|---|"];
+    for (let i = 0; i < 100_000; i++) rows.push(`| ${i} | x |`);
+    expect(() => transformTables(rows.join("\n"), "reconstruct")).not.toThrow();
+  });
 });

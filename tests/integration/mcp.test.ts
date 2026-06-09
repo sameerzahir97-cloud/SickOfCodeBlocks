@@ -38,10 +38,13 @@ describe.skipIf(!available)("mcp server (spawns dist/mcp.js)", () => {
     }
   });
 
-  it("advertises the sanitize_text tool", async () => {
+  it("advertises its tools", async () => {
     await withClient(async (client) => {
       const { tools } = await client.listTools();
-      expect(tools.map((t: any) => t.name)).toContain("sanitize_text");
+      const names = tools.map((t: any) => t.name);
+      expect(names).toContain("sanitize_text");
+      expect(names).toContain("clean_clipboard");
+      expect(names).toContain("start_clipboard_watcher");
     });
   });
 

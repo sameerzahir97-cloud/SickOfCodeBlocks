@@ -25,6 +25,9 @@ export interface ParsedCli {
   watch: boolean;
   interval: number;
   quiet: boolean;
+  verbose: boolean;
+  dryRun: boolean;
+  onlyMessy: boolean;
   showHelp: boolean;
   showVersion: boolean;
 }
@@ -94,8 +97,11 @@ export function parseCli(argv: string[]): ParsedCli {
         "no-collapse-blanks": { type: "boolean" },
         redact: { type: "boolean", short: "r" },
         quiet: { type: "boolean", short: "q" },
+        verbose: { type: "boolean" },
         watch: { type: "boolean", short: "w" },
         interval: { type: "string" },
+        "only-messy": { type: "boolean" },
+        "dry-run": { type: "boolean" },
         slack: { type: "boolean" },
         teams: { type: "boolean" },
         email: { type: "boolean" },
@@ -116,7 +122,8 @@ export function parseCli(argv: string[]): ParsedCli {
   if (v.version) return baseResult({ showVersion: true });
 
   // Defaults, then config file, then preset, then explicit flags (explicit wins).
-  let o: SanitizeOptions = { ...DEFAULTS, ...loadConfig() };
+  const cfg = loadConfig();
+  let o: SanitizeOptions = { ...DEFAULTS, ...cfg };
   const preset: Preset | null = v.plain
     ? "plain"
     : v.email
@@ -166,6 +173,20 @@ export function parseCli(argv: string[]): ParsedCli {
     o.expandTabs = 4;
   }
 
+  // Watch mode flattens by default (Markdown included) so a copied AI answer /
+  // README pastes as prose without per-copy flags. Skipped when the user opted
+  // out (--only-messy / --no-markdown), picked a preset, or set markdown in config.
+  if (
+    v.watch &&
+    !v["only-messy"] &&
+    !preset &&
+    !v.markdown &&
+    !v["no-markdown"] &&
+    cfg.markdown === undefined
+  ) {
+    o.markdown = true;
+  }
+
   const first = positionals[0];
   const source: InputSource = first
     ? { kind: "file", path: first }
@@ -185,6 +206,9 @@ export function parseCli(argv: string[]): ParsedCli {
     watch: Boolean(v.watch),
     interval,
     quiet: Boolean(v.quiet),
+    verbose: Boolean(v.verbose),
+    dryRun: Boolean(v["dry-run"]),
+    onlyMessy: Boolean(v["only-messy"]),
     showHelp: false,
     showVersion: false,
   };
@@ -200,6 +224,9 @@ function baseResult(over: Partial<ParsedCli>): ParsedCli {
     watch: false,
     interval: DEFAULT_INTERVAL_MS,
     quiet: false,
+    verbose: false,
+    dryRun: false,
+    onlyMessy: false,
     showHelp: false,
     showVersion: false,
     ...over,
@@ -243,9 +270,13 @@ OPTIONS
       --crlf            emit CRLF line endings (default LF)
       --no-collapse-blanks  keep runs of blank lines
   -r, --redact          mask secrets/PII (API keys, JWTs, emails, IPs, home paths)
-  -q, --quiet           in --clip mode, suppress the change summary on stderr
-  -w, --watch           keep cleaning the clipboard in place (Ctrl+C to stop)
+  -q, --quiet           suppress the per-copy change summary on stderr
+      --verbose         --watch: also report copies that were already clean
+  -w, --watch           keep cleaning the clipboard in place; flattens Markdown by
+                        default (Ctrl+C or q to stop)
       --interval <ms>   --watch poll interval (default 800, 1500 on Windows)
+      --only-messy      --watch: only touch terminal-looking output (the old default)
+      --dry-run         --watch: show what would change, never write the clipboard
   -h, --help            show this help
   -v, --version         show version
 
@@ -257,8 +288,16 @@ PRESETS  (apply a bundle; individual flags still override)
                         glyph noise, KEEP Markdown structure + Unicode (no folding)
       (--html, --prompts, --reflow, --powershell are opt-in, not in any preset)
 
+WATCH  (socb --watch)
+  Cleans every copy in place so you can paste straight into Slack / Teams / email /
+  Jira. Flattens Markdown and strips terminal noise by default. Live keys (in a
+  terminal):  [m] markdown  [r] redact  [p] pause  [s] skip next  [u] undo  [q] quit
+  Pair with a destination preset:  --watch --teams (chat)  |  --watch --email (docs)
+  --only-messy restores the conservative "terminal output only" behavior.
+
 CONFIG  (set persistent defaults so you don't repeat flags)
   ~/.socbrc.json  or  ./.socbrc.json , e.g.  { "redact": true, "tableMode": "strip" }
+  Set one from the CLI:  socb config set redact true
   Precedence:  built-in defaults < config file < preset < command-line flags.
 
 EXAMPLES
@@ -266,7 +305,8 @@ EXAMPLES
   docker ps | socb --table ascii
   pytest | socb --redact > clean.txt
   socb --clip --redact
-  socb --watch --redact          # auto-clean every copy until you stop it
+  socb --watch                   # auto-clean every copy (flattens Markdown too)
+  socb --watch --teams --redact  # ...tuned for Teams/Slack, masking secrets
   socb build.log --emulate
 
 --redact is best-effort, not a security guarantee. Review output before sharing.

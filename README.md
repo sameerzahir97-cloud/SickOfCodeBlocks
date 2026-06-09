@@ -76,7 +76,8 @@ Real workflows, with the exact command:
 | Tidy an `sf`/`sfdx` deploy error for Teams | `sf project deploy start 2>&1 \| socb --teams` |
 | Email an AI answer or README as plain prose | copy it, then `socb --clip --email` |
 | Clean a log file for a gist / bug report | `socb build.log --plain > clean.txt` |
-| Auto-clean every copy (set & forget) | `socb --watch` |
+| Auto-clean every copy (incl. Markdown) | `socb --watch` |
+| Auto-clean copies for Teams / Slack | `socb --watch --teams` |
 | Scrub secrets before sharing | `socb --clip --redact` |
 | Tidy a pasted terminal session (prompts + wraps) | `socb session.txt --email --prompts --reflow` |
 | Tidy a PowerShell error block | `socb err.txt --ps` |
@@ -88,14 +89,24 @@ Real workflows, with the exact command:
 
 Don't want to run `socb` every time? Two ways to make it automatic:
 
-**1. Watch the clipboard.** Run it once and every copy is cleaned in place:
+**1. Watch the clipboard.** Run it once; every copy is cleaned **and Markdown-flattened** in place, ready to paste into Slack, Teams, email, or a Jira ticket:
 
 ```sh
-socb --watch              # clean each copy
+socb --watch              # clean + flatten every copy
+socb --watch --teams      # ...tuned for a Teams / Slack paste
+socb --watch --email      # ...flatten to prose for email / Docs / Jira
 socb --watch --redact     # ...and mask secrets too
 ```
 
-Copy any messy terminal output anywhere → it's sanitized the moment you copy it, ready to paste. Press Ctrl+C to stop. (Loop-safe: it never re-processes its own output.)
+While it runs in a terminal, live keys let you adjust without restarting:
+
+```
+[m] Markdown   [r] redact   [p] pause   [s] skip next copy   [u] undo   [q] quit
+```
+
+Copy anything → it's sanitized the moment you copy it. Press `q` or Ctrl+C to stop. It's loop-safe (never re-processes its own output) and crash-proof (a bad copy is skipped, never fatal).
+
+Want the old, conservative behavior — only rewrite copies that look like terminal output, leaving ordinary text and Markdown untouched? Add `--only-messy`. Want to watch it work without changing your clipboard? Add `--dry-run`.
 
 **2. Set persistent defaults** so you never type a flag. Drop a `~/.socbrc.json` (or a per-project `./.socbrc.json`):
 
@@ -217,13 +228,27 @@ socb --clip
 
 ## Use with AI agents (MCP + hook)
 
-`socb` ships an MCP server so Claude Desktop, Claude Code, and Codex can clean text on demand, plus an experimental hook that denoises shell output before it reaches the model.
+`socb` ships an MCP server so Claude Desktop, Claude Code, and Codex can clean text or the user's clipboard on demand — and even start a clipboard watcher in a terminal — plus an experimental hook that denoises shell output before it reaches the model.
 
 ### MCP server
 
-`socb-mcp` is a stdio MCP server exposing one tool, `sanitize_text(text, preset?, options?)`.
+`socb-mcp` is a stdio MCP server exposing three tools:
 
-Claude Code / Claude Desktop — add to `.mcp.json` (project) or your user config:
+| Tool | What it does |
+|---|---|
+| `sanitize_text(text, preset?, options?)` | Clean a string you pass in. |
+| `clean_clipboard(preset?, options?)` | Read the user's clipboard, clean/flatten it, and write it back — paste-ready. |
+| `start_clipboard_watcher(preset?, redact?, interval?)` | Open a terminal running `socb --watch` so every copy is auto-cleaned (best-effort; otherwise returns the command for the agent to run in a background terminal). |
+
+So you can just ask your agent *"clean what I just copied"* or *"start a clipboard watcher for Teams,"* and it calls the matching tool.
+
+Claude Code — one command:
+
+```sh
+claude mcp add socb -- socb-mcp
+```
+
+Or add to `.mcp.json` (project) / your user config by hand:
 
 ```json
 { "mcpServers": { "socb": { "command": "socb-mcp" } } }

@@ -2,7 +2,13 @@ import { describe, it, expect, afterEach } from "vitest";
 import { writeFileSync, rmSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { loadConfig, validate } from "../../src/config.js";
+import {
+  loadConfig,
+  validate,
+  setUserConfig,
+  isFirstWatchRun,
+  markWatchRunSeen,
+} from "../../src/config.js";
 
 const tmps: string[] = [];
 function tmpConfig(content: string): string {
@@ -60,5 +66,31 @@ describe("loadConfig", () => {
     const a = tmpConfig('{ "redact": true, "tableMode": "strip" }');
     const b = tmpConfig('{ "tableMode": "keep" }');
     expect(loadConfig([a, b])).toEqual({ redact: true, tableMode: "keep" });
+  });
+});
+
+describe("setUserConfig", () => {
+  it("writes a key while preserving existing ones", () => {
+    const p = tmpConfig('{ "redact": true }');
+    setUserConfig("markdown", false, p);
+    expect(loadConfig([p])).toEqual({ redact: true, markdown: false });
+  });
+  it("creates the file when missing", () => {
+    const dir = mkdtempSync(join(tmpdir(), "socbrc-"));
+    tmps.push(dir);
+    const p = join(dir, ".socbrc.json");
+    setUserConfig("tableMode", "strip", p);
+    expect(loadConfig([p])).toEqual({ tableMode: "strip" });
+  });
+});
+
+describe("first-run marker", () => {
+  it("is true until marked, then false", () => {
+    const dir = mkdtempSync(join(tmpdir(), "socb-state-"));
+    tmps.push(dir);
+    const p = join(dir, "state.json");
+    expect(isFirstWatchRun(p)).toBe(true);
+    markWatchRunSeen(p);
+    expect(isFirstWatchRun(p)).toBe(false);
   });
 });

@@ -7,7 +7,7 @@
 //
 // Precedence overall: built-in DEFAULTS < config file < preset < CLI flags.
 
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { SanitizeOptions, TableMode, Newline } from "./pipeline.js";
@@ -93,4 +93,56 @@ export function validate(obj: unknown): Partial<SanitizeOptions> {
   }
 
   return out;
+}
+
+/** The user-level config file path (~/.socbrc.json) used by `socb config set`. */
+export function userConfigPath(): string {
+  return join(homedir(), ".socbrc.json");
+}
+
+const statePath = (): string => join(homedir(), ".socb-state.json");
+
+/**
+ * True the first time `--watch` is ever run on this machine, so the CLI can show
+ * a one-time explainer. Best-effort: any read error counts as "first run".
+ */
+export function isFirstWatchRun(path: string = statePath()): boolean {
+  try {
+    const parsed = JSON.parse(readFileSync(path, "utf8")) as { watchSeen?: boolean };
+    return !parsed.watchSeen;
+  } catch {
+    return true;
+  }
+}
+
+/** Record that the watch explainer has been shown. Never throws. */
+export function markWatchRunSeen(path: string = statePath()): void {
+  try {
+    writeFileSync(path, JSON.stringify({ watchSeen: true }) + "\n");
+  } catch {
+    /* best-effort: never block watch on a state-write failure */
+  }
+}
+
+/**
+ * Merge a single key into the user-level ~/.socbrc.json, preserving other keys.
+ * Returns the path written. Caller is responsible for validating key/value.
+ */
+export function setUserConfig(
+  key: string,
+  value: unknown,
+  path: string = userConfigPath(),
+): string {
+  let current: Record<string, unknown> = {};
+  try {
+    let raw = readFileSync(path, "utf8");
+    if (raw.charCodeAt(0) === 0xfeff) raw = raw.slice(1);
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object") current = parsed as Record<string, unknown>;
+  } catch {
+    /* no/invalid file -> start fresh */
+  }
+  current[key] = value;
+  writeFileSync(path, JSON.stringify(current, null, 2) + "\n");
+  return path;
 }
